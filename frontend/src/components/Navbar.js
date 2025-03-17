@@ -41,7 +41,7 @@ const CustomNavbar = () => {
           <div className="pole-stripes"></div>
         </div>
         <Navbar.Brand as={Link} to="/" className="navbar-brand-custom">
-          Barber<span>Master</span>
+          Бръс<span>нраяТ</span>
         </Navbar.Brand>
         
         <Navbar.Toggle 

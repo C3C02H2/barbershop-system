@@ -5,7 +5,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { format } from 'date-fns';
 import { FaRegClock, FaMapMarkerAlt, FaPhoneAlt, FaEnvelope, FaClock, FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn, FaCut, FaBath, FaCheck } from 'react-icons/fa';
 import CustomNavbar from '../components/Navbar';
-import { getServices, getGalleryImages, createAppointment, getAvailableSlots } from '../utils/api';
+import { getServices, getGalleryImages, createAppointment, getAvailableSlots, createReview, getReviews } from '../utils/api';
 import { Link } from 'react-router-dom';
 import '../styles/home.css';
 
@@ -26,6 +26,13 @@ const HomePage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [phoneError, setPhoneError] = useState('');
+  const [reviewName, setReviewName] = useState('');
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewText, setReviewText] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [reviewSuccess, setReviewSuccess] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+  const [reviews, setReviews] = useState([]);
 
   // Временни услуги за бръснарницата (ще се заменят с данни от API)
   const barberServices = [
@@ -84,6 +91,7 @@ const HomePage = () => {
   useEffect(() => {
     fetchServices();
     fetchGalleryImages();
+    fetchReviews();
   }, []);
 
   useEffect(() => {
@@ -197,6 +205,17 @@ const HomePage = () => {
     }
   };
 
+  const fetchReviews = async () => {
+    try {
+      const response = await getReviews();
+      if (response.data.reviews) {
+        setReviews(response.data.reviews);
+      }
+    } catch (err) {
+      console.error('Error fetching reviews:', err);
+    }
+  };
+
   const validatePhone = (phone) => {
     const phoneRegex = /^\+?[0-9]{10,15}$/;
     return phoneRegex.test(phone);
@@ -256,6 +275,40 @@ const HomePage = () => {
     }
   };
 
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmittingReview(true);
+    setReviewSuccess(false);
+    setReviewError('');
+
+    if (!reviewName || !reviewText || !reviewRating) {
+      setReviewError('Моля, попълнете всички задължителни полета и дайте оценка');
+      setIsSubmittingReview(false);
+      return;
+    }
+
+    try {
+      await createReview({
+        client_name: reviewName,
+        rating: reviewRating,
+        text: reviewText
+      });
+
+      setReviewSuccess(true);
+      setReviewName('');
+      setReviewRating(0);
+      setReviewText('');
+      
+      // Обновяваме списъка с отзиви
+      fetchReviews();
+    } catch (err) {
+      console.error('Error submitting review:', err);
+      setReviewError('Неуспешно изпращане на отзива. Моля, опитайте отново.');
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
   return (
     <>
       <CustomNavbar />
@@ -267,7 +320,7 @@ const HomePage = () => {
           <Row className="align-items-center">
             <Col lg={6} className="hero-content">
               <span className="barber-badge">От 1985</span>
-              <h1 className="hero-title">БръснаяТ</h1>
+              <h1 className="hero-title">БръснаряТ</h1>
               <p className="hero-subtitle">Традиция и професионализъм</p>
               <p className="hero-description">
                 Авторитетна бръснарница с дългогодишни традиции. Подстригване, бръснене и 
@@ -561,27 +614,90 @@ const HomePage = () => {
           </div>
           
           <Row className="mt-5">
-            <Col md={4} className="mb-4">
-              <div className="testimonial-card">
-                <div className="testimonial-stars">★★★★★</div>
-                <p className="testimonial-text">"Най-добрата бръснарница в града! Професионално отношение и перфектно подстригване всеки път."</p>
-                <div className="testimonial-author">- Георги П.</div>
-              </div>
+            {/* Форма за нов отзив */}
+            <Col md={12} className="mb-5">
+              <Card className="review-form-card">
+                <Card.Body>
+                  <h3 className="text-center mb-4">Споделете Вашето Мнение</h3>
+                  <Form onSubmit={handleReviewSubmit}>
+                    <Row>
+                      <Col md={6}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Вашето име</Form.Label>
+                          <Form.Control
+                            type="text"
+                            value={reviewName}
+                            onChange={(e) => setReviewName(e.target.value)}
+                            placeholder="Въведете вашето име"
+                            required
+                          />
+                        </Form.Group>
+                      </Col>
+                      <Col md={6}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Оценка</Form.Label>
+                          <div className="rating-input">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <span
+                                key={star}
+                                onClick={() => setReviewRating(star)}
+                                style={{ cursor: 'pointer', color: star <= reviewRating ? '#ffc107' : '#e4e5e9' }}
+                              >
+                                ★
+                              </span>
+                            ))}
+                          </div>
+                        </Form.Group>
+                      </Col>
+                    </Row>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Вашият отзив</Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={4}
+                        value={reviewText}
+                        onChange={(e) => setReviewText(e.target.value)}
+                        placeholder="Споделете вашето мнение за нашите услуги"
+                        required
+                      />
+                    </Form.Group>
+                    <Button 
+                      variant="primary" 
+                      type="submit"
+                      className="w-100"
+                      disabled={isSubmittingReview}
+                    >
+                      {isSubmittingReview ? 'Изпращане...' : 'Изпрати отзив'}
+                    </Button>
+                    {reviewSuccess && (
+                      <Alert variant="success" className="mt-3">
+                        Благодарим за вашия отзив! Той ще бъде публикуван след одобрение.
+                      </Alert>
+                    )}
+                    {reviewError && (
+                      <Alert variant="danger" className="mt-3">
+                        {reviewError}
+                      </Alert>
+                    )}
+                  </Form>
+                </Card.Body>
+              </Card>
             </Col>
-            <Col md={4} className="mb-4">
-              <div className="testimonial-card">
-                <div className="testimonial-stars">★★★★★</div>
-                <p className="testimonial-text">"Атмосферата е автентична, а бръснарите са истински майстори. Препоръчвам на всеки мъж!"</p>
-                <div className="testimonial-author">- Иван М.</div>
-              </div>
-            </Col>
-            <Col md={4} className="mb-4">
-              <div className="testimonial-card">
-                <div className="testimonial-stars">★★★★★</div>
-                <p className="testimonial-text">"Класическото бръснене тук е истинско преживяване. Горещите кърпи и масажът на лицето са невероятни."</p>
-                <div className="testimonial-author">- Петър С.</div>
-              </div>
-            </Col>
+
+            {/* Съществуващи отзиви */}
+            {reviews.map((review) => (
+              <Col md={4} key={review.id} className="mb-4">
+                <div className="testimonial-card">
+                  <div className="testimonial-stars">
+                    {[...Array(review.rating)].map((_, i) => (
+                      <span key={i}>★</span>
+                    ))}
+                  </div>
+                  <p className="testimonial-text">"{review.text}"</p>
+                  <div className="testimonial-author">- {review.client_name}</div>
+                </div>
+              </Col>
+            ))}
           </Row>
         </Container>
       </section>
@@ -597,7 +713,7 @@ const HomePage = () => {
                   <strong>Адрес</strong>
                   <p className="d-flex align-items-center">
                     <FaMapMarkerAlt className="me-2" /> 
-                    бул. Витоша 18, София, България
+                    ж.к. Надежда 3, ул. „Подпоручик Футеков" 1, 1229 София
                   </p>
                 </div>
                 <div className="contact-item">
@@ -632,7 +748,7 @@ const HomePage = () => {
             <Col lg={7}>
               <div className="map-container">
                 <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.215266754809!2d-73.98784492426285!3d40.75797623440235!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c25855c6480299%3A0x55194ec5a1ae072e!2sTimes%20Square!5e0!3m2!1sen!2sus!4v1710371245884!5m2!1sen!2sus"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2931.3947269493424!2d23.31598631570661!3d42.73353847916587!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x40aa8f2aaaaaaaaa%3A0x0!2z0LbQui4g0J3QsNC00LXQttC00LAgMywg0YPQuy4g4oCe0J_QvtC00L_QvtGA0YPRh9C40Log0KTRg9GC0LXQutC-0LLigJwgMSwgMTIyOSDQodC-0YTQuNGP!5e0!3m2!1sbg!2sbg!4v1710371245884!5m2!1sbg!2sbg"
                   width="100%"
                   height="450"
                   style={{ border: 0 }}
@@ -656,7 +772,7 @@ const HomePage = () => {
                 <div className="footer-brand-pole">
                   <div className="pole-stripes"></div>
                 </div>
-                Barber<span>Master</span>
+                <span>БръснаряТ</span>
               </div>
               <p className="footer-text">
                 Класическа бръснарница с дългогодишни традиции. 
@@ -701,7 +817,7 @@ const HomePage = () => {
               <ul className="footer-links">
                 <li className="footer-link d-flex align-items-center">
                   <FaMapMarkerAlt className="me-2" /> 
-                  <span>бул. Витоша 18, София, България</span>
+                  <span>ж.к. Надежда 3, ул. „Подпоручик Футеков" 1, 1229 София</span>
                 </li>
                 <li className="footer-link d-flex align-items-center">
                   <FaPhoneAlt className="me-2" /> 
@@ -715,7 +831,7 @@ const HomePage = () => {
             </Col>
           </Row>
           <div className="copyright">
-            <p>&copy; {new Date().getFullYear()} BarberMaster. Всички права запазени.</p>
+            <p>&copy; {new Date().getFullYear()} БръснарТ. Всички права запазени.</p>
           </div>
         </Container>
       </footer>

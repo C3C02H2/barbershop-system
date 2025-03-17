@@ -7,6 +7,7 @@ import AdminAppointments from './pages/AdminAppointments';
 import AdminGallery from './pages/AdminGallery';
 import AdminCalendar from './pages/AdminCalendar';
 import AdminServices from './pages/AdminServices';
+import AdminReviews from './pages/AdminReviews';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -51,6 +52,14 @@ function App() {
         element={
           <ProtectedRoute>
             <AdminServices />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/reviews"
+        element={
+          <ProtectedRoute>
+            <AdminReviews />
           </ProtectedRoute>
         }
       />

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Container, Row, Col, Nav, Button } from 'react-bootstrap';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../utils/AuthContext';
-import { FaCalendarAlt, FaImages, FaClipboardList, FaSignOutAlt, FaCog, FaBars, FaTimes } from 'react-icons/fa';
+import { FaCalendarAlt, FaImages, FaClipboardList, FaSignOutAlt, FaCog, FaBars, FaTimes, FaComments } from 'react-icons/fa';
 import '../styles/admin.css';
 
 const AdminLayout = ({ children }) => {
@@ -66,7 +66,16 @@ const AdminLayout = ({ children }) => {
                 to="/admin/gallery"
                 className={location.pathname === '/admin/gallery' ? 'active' : ''}
               >
-                <FaImages /> <span>Галерия</span>
+                <FaImages className="me-2" /> Галерия
+              </Nav.Link>
+            </Nav.Item>
+            <Nav.Item>
+              <Nav.Link
+                as={Link}
+                to="/admin/reviews"
+                className={location.pathname === '/admin/reviews' ? 'active' : ''}
+              >
+                <FaComments className="me-2" /> Отзиви
               </Nav.Link>
             </Nav.Item>
             <Nav.Item>

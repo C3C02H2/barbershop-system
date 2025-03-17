@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
@@ -17,8 +17,37 @@ def create_app(config_class=Config):
     db.init_app(app)
     jwt.init_app(app)
     
-    # Настройка на CORS за всички източници
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    # Improve JWT error handling
+    @jwt.invalid_token_loader
+    def invalid_token_callback(error_string):
+        return jsonify({
+            'error': 'Invalid token',
+            'message': error_string
+        }), 401
+    
+    @jwt.expired_token_loader
+    def expired_token_callback(jwt_header, jwt_payload):
+        return jsonify({
+            'error': 'Token has expired',
+            'message': 'Please log in again'
+        }), 401
+    
+    # Log all requests for debugging
+    @app.before_request
+    def log_request_info():
+        app.logger.debug('Headers: %s', request.headers)
+        app.logger.debug('Body: %s', request.get_data())
+    
+    # Configure CORS more permissively
+    CORS(app, 
+         resources={r"/*": {
+             "origins": ["http://localhost:3000", "http://192.168.0.131:3000"],
+             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+             "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
+             "expose_headers": ["Content-Type", "Authorization"],
+             "supports_credentials": True,
+             "max_age": 600  # Cache preflight requests for 10 minutes
+         }})
     
     # Ensure upload directory exists
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -28,11 +57,13 @@ def create_app(config_class=Config):
     from .routes.services import services_bp
     from .routes.appointments import appointments_bp
     from .routes.gallery import gallery_bp
+    from .routes.reviews import reviews_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(services_bp, url_prefix='/api/services')
     app.register_blueprint(appointments_bp, url_prefix='/api/appointments')
     app.register_blueprint(gallery_bp, url_prefix='/api/gallery')
+    app.register_blueprint(reviews_bp, url_prefix='/api/reviews')
     
     # Create database tables
     with app.app_context():

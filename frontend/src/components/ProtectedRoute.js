@@ -3,14 +3,14 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../utils/AuthContext';
 
 const ProtectedRoute = ({ children }) => {
-  const context = useAuth();
+  const auth = useAuth();
   
-  if (!context) {
+  if (!auth) {
     console.error("Auth context is undefined!");
     return <Navigate to="/admin/login" />;
   }
   
-  const { currentUser, loading } = context;
+  const { isAuthenticated, isAdmin, loading } = auth;
 
   if (loading) {
     return (
@@ -22,7 +22,8 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  if (!currentUser) {
+  if (!isAuthenticated || !isAdmin) {
+    console.log('Not authenticated or not admin, redirecting to login');
     return <Navigate to="/admin/login" />;
   }
 

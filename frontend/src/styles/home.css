@@ -623,6 +623,12 @@
   font-weight: 600;
   position: relative;
   padding-bottom: 0.5rem;
+  background: linear-gradient(90deg, #ff0000 0%, #ffffff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .footer-links-title::after {
@@ -630,9 +636,9 @@
   position: absolute;
   left: 0;
   bottom: 0;
-  width: 30px;
+  width: 50px;
   height: 2px;
-  background-color: var(--secondary-color);
+  background: linear-gradient(90deg, #ff0000 0%, #ffffff 100%);
 }
 
 .footer-links {
@@ -877,4 +883,51 @@
   font-weight: 700;
   color: var(--primary-dark);
   text-align: right;
+}
+
+/* Стилове за формата за отзиви */
+.review-form-card {
+  background-color: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.review-form-card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.rating-input {
+  font-size: 2rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.rating-input span {
+  transition: all 0.2s ease;
+}
+
+.rating-input span:hover {
+  transform: scale(1.2);
+}
+
+/* Стилове за съществуващите отзиви */
+.testimonial-card {
+  background-color: var(--white);
+  padding: 30px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  position: relative;
+  margin-top: 20px;
+  transition: all 0.3s ease;
+  height: 100%;
+  border-bottom: 4px solid var(--secondary-color);
+}
+
+.gradient-text {
+  background: linear-gradient(45deg, #007bff, #00ff88);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 } 

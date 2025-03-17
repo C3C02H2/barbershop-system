@@ -14,13 +14,14 @@ const AdminLogin = () => {
   
   useEffect(() => {
     // If user is already logged in, redirect to admin dashboard
-    if (auth && auth.currentUser) {
+    if (auth && auth.isAuthenticated && auth.isAdmin) {
       navigate('/admin');
     }
-  }, [auth, auth?.currentUser, navigate]);
+  }, [auth, auth?.isAuthenticated, auth?.isAdmin, navigate]);
   
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('Login attempt with:', { username });
     setLocalError('');
     
     if (!username || !password) {
@@ -30,9 +31,15 @@ const AdminLogin = () => {
     
     setLoading(true);
     try {
-      const success = await auth.login({ username, password });
-      if (success) {
+      const result = await auth.login({ username, password });
+      console.log('Login result:', result);
+      
+      if (result && result.success) {
+        console.log('Login successful, redirecting to /admin');
         navigate('/admin');
+      } else {
+        // Set error message from result if available
+        setLocalError(result?.error || 'Login failed. Please check your credentials.');
       }
     } catch (err) {
       console.error("Login error:", err);
